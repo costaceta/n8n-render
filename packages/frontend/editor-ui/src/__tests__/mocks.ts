@@ -10,8 +10,9 @@ import type {
 	LoadedClass,
 	INodeTypeDescription,
 	INodeIssues,
+	ITaskData,
 } from 'n8n-workflow';
-import { NodeConnectionType, NodeHelpers, Workflow } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeHelpers, Workflow } from 'n8n-workflow';
 import { v4 as uuid } from 'uuid';
 import { mock } from 'vitest-mock-extended';
 
@@ -23,6 +24,7 @@ import {
 	MANUAL_TRIGGER_NODE_TYPE,
 	NO_OP_NODE_TYPE,
 	SET_NODE_TYPE,
+	SIMULATE_NODE_TYPE,
 	STICKY_NODE_TYPE,
 } from '@/constants';
 import type { INodeUi, IWorkflowDb } from '@/Interface';
@@ -50,23 +52,28 @@ export const mockNode = ({
 
 export const mockNodeTypeDescription = ({
 	name = SET_NODE_TYPE,
+	icon = 'fa:pen',
 	version = 1,
 	credentials = [],
-	inputs = [NodeConnectionType.Main],
-	outputs = [NodeConnectionType.Main],
+	inputs = [NodeConnectionTypes.Main],
+	outputs = [NodeConnectionTypes.Main],
 	codex = undefined,
 	properties = [],
+	group,
 }: {
 	name?: INodeTypeDescription['name'];
+	icon?: INodeTypeDescription['icon'];
 	version?: INodeTypeDescription['version'];
 	credentials?: INodeTypeDescription['credentials'];
 	inputs?: INodeTypeDescription['inputs'];
 	outputs?: INodeTypeDescription['outputs'];
 	codex?: INodeTypeDescription['codex'];
 	properties?: INodeTypeDescription['properties'];
+	group?: INodeTypeDescription['group'];
 } = {}) =>
 	mock<INodeTypeDescription>({
 		name,
+		icon,
 		displayName: name,
 		description: '',
 		version,
@@ -76,12 +83,13 @@ export const mockNodeTypeDescription = ({
 		defaultVersion: Array.isArray(version) ? version[version.length - 1] : version,
 		properties: properties as [],
 		maxNodes: Infinity,
-		group: EXECUTABLE_TRIGGER_NODE_TYPES.includes(name) ? ['trigger'] : [],
+		group: (group ?? EXECUTABLE_TRIGGER_NODE_TYPES.includes(name)) ? ['trigger'] : [],
 		inputs,
 		outputs,
 		codex,
 		credentials,
 		documentationUrl: 'https://docs',
+		iconUrl: 'nodes/test-node/icon.svg',
 		webhooks: undefined,
 	});
 
@@ -101,6 +109,7 @@ export const mockNodes = [
 	mockNode({ name: 'Chat Trigger', type: CHAT_TRIGGER_NODE_TYPE }),
 	mockNode({ name: 'Agent', type: AGENT_NODE_TYPE }),
 	mockNode({ name: 'Sticky', type: STICKY_NODE_TYPE }),
+	mockNode({ name: 'Simulate', type: SIMULATE_NODE_TYPE }),
 	mockNode({ name: CanvasNodeRenderType.AddNodes, type: CanvasNodeRenderType.AddNodes }),
 	mockNode({ name: 'End', type: NO_OP_NODE_TYPE }),
 ];
@@ -193,5 +202,17 @@ export function createTestNode(node: Partial<INode> = {}): INode {
 		position: [0, 0] as [number, number],
 		parameters: {},
 		...node,
+	};
+}
+
+export function createTestTaskData(partialData: Partial<ITaskData>): ITaskData {
+	return {
+		startTime: 0,
+		executionTime: 1,
+		executionIndex: 0,
+		source: [],
+		executionStatus: 'success',
+		data: { main: [[{ json: {} }]] },
+		...partialData,
 	};
 }
